@@ -86,7 +86,7 @@ jobs:
 
           ########## create tar.gz ##########
           RELEASE_NAME=rscuboids-${GITHUB_REF/refs\/tags\//}-"${{ matrix.job.os-name }}"-"${{ matrix.job.architecture }}"
-          tar czvf $RELEASE_NAME.tar.gz $BINARY_NAME
+          tar czvf $RELEASE_NAME.tar.gz $BINARY_NAME ../../../assets
 
           ########## create sha256 ##########
           if [[ "${{ runner.os }}" == 'Windows' ]]; then

@@ -1,7 +1,7 @@
 [package]
 name = "rscuboids"
 version = "0.1.0"
-authors = ["matek_a@outlook.com"]
+authors = ["Mateusz Adamczyk <matek_a@outlook.com>"]
 edition = "2018"
 description = "Asteroids clone written in Rust"
 repository = "https://github.com/mateka/rscuboids"
@@ -11,3 +11,4 @@ license = "MIT"
 
 [dependencies]
 bevy = "0.4.0"
+rand = "0.8.0"
