@@ -11,4 +11,5 @@ license = "MIT"
 
 [dependencies]
 bevy = "0.4.0"
+bevy_rapier2d = "0.7.0"
 rand = "0.8.0"
