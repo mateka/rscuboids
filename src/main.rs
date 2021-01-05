@@ -4,9 +4,9 @@ use bevy::{
 };
 use bevy_rapier2d::physics::RapierPhysicsPlugin;
 use bevy_rapier2d::rapier::{dynamics::RigidBodyBuilder, geometry::ColliderBuilder};
-use rand::{rngs::StdRng, Rng, SeedableRng};
-
 use bevy_rapier2d::render::RapierRenderPlugin;
+
+use rscuboids::{cuboids::Spawner, GamePlugins};
 
 #[bevy_main]
 fn main() {
@@ -15,13 +15,15 @@ fn main() {
             title: "rsCuboids".to_string(),
             ..Default::default()
         })
+        .add_resource(ClearColor(Color::rgb(0.1, 0.1, 0.1)))
         .add_plugins(DefaultPlugins)
         .add_plugin(RapierPhysicsPlugin)
         .add_plugin(RapierRenderPlugin)
         .add_plugin(FrameTimeDiagnosticsPlugin::default())
+        .add_plugins(GamePlugins)
         .add_startup_system(setup.system())
         .add_startup_system(setup_world.system())
-        .add_startup_system(setup_cubes.system())
+        .add_startup_system(setup_cube_spawners.system())
         .add_system(text_update_system.system())
         .run();
 }
@@ -83,34 +85,47 @@ fn setup_world(
     commands.spawn((right_body, right_collider));
 }
 
-fn setup_cubes(
+fn setup_cube_spawners(
     commands: &mut Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    let mut rng = StdRng::from_entropy();
-    let cube_handle = meshes.add(Mesh::from(shape::Cube { size: 2.0 }));
-    for _ in 0..50 {
-        let position = Vec3::new(rng.gen_range(-50.0..50.0), rng.gen_range(-50.0..50.0), 0.0);
-        let body = RigidBodyBuilder::new_dynamic()
-            .translation(position.x, position.y)
-            .linvel(rng.gen_range(-30.0..30.0), rng.gen_range(-30.0..30.0));
-        let collider = ColliderBuilder::cuboid(1.0, 1.0).restitution(1.5);
-        commands
-            .spawn(PbrBundle {
-                mesh: cube_handle.clone(),
-                material: materials.add(StandardMaterial {
-                    albedo: Color::rgb(
-                        rng.gen_range(0.0..1.0),
-                        rng.gen_range(0.0..1.0),
-                        rng.gen_range(0.0..1.0),
-                    ),
-                    ..Default::default()
-                }),
-                ..Default::default()
-            })
-            .with_bundle((body, collider));
-    }
+    let mesh = meshes.add(Mesh::from(shape::Icosphere {
+        radius: 2.0,
+        ..Default::default()
+    }));
+    let material = materials.add(StandardMaterial {
+        albedo: Color::rgb(0.75, 0.6, 0.0),
+        ..Default::default()
+    });
+
+    commands
+        .spawn(PbrBundle {
+            mesh: mesh.clone(),
+            material: material.clone(),
+            transform: Transform::from_translation(Vec3::new(50.0, -15.0, 0.0)),
+            ..Default::default()
+        })
+        .with(Spawner::new(
+            Timer::from_seconds(1.0, true),
+            Some(180..360),
+            None,
+            None,
+        ));
+
+    commands
+        .spawn(PbrBundle {
+            mesh,
+            material,
+            transform: Transform::from_translation(Vec3::new(-50.0, 15.0, 0.0)),
+            ..Default::default()
+        })
+        .with(Spawner::new(
+            Timer::from_seconds(1.0, true),
+            Some(0..180),
+            None,
+            None,
+        ));
 }
 
 // A unit struct to help identify the FPS UI component, since there may be many Text components
