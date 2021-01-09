@@ -35,16 +35,13 @@ fn spawn_cuboid(
         .collision_groups(physics_layers::ALL);
 
     commands
-        .spawn_object(
-            PbrBundle {
-                mesh: meshes.cuboid[&size].clone(),
-                material: materials.cuboid[&size].clone(),
-                ..Default::default()
-            },
-            body,
-            collider,
-        )
-        .with(Cuboid { size });
+        .spawn_object((Cuboid { size },), body, collider)
+        .with_bundle(PbrBundle {
+            mesh: meshes.cuboid[&size].clone(),
+            material: materials.cuboid[&size].clone(),
+            transform: Transform::from_translation(Vec3::new(position.x, position.y, 0.0)),
+            ..Default::default()
+        });
 }
 
 #[derive(Debug)]
