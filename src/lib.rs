@@ -10,12 +10,14 @@ pub mod physics_layers {
     pub const ALL: InteractionGroups = InteractionGroups::all();
 }
 
-pub mod assets;
-pub mod cuboids;
+mod assets;
+mod cuboids;
 mod physics_events;
 mod physics_object_spawner;
-pub mod trap;
-pub mod world;
+mod scoring;
+mod trap;
+mod ui;
+mod world;
 
 pub use physics_events::{ContactEvent, Proximity, ProximityEvent};
 pub use physics_object_spawner::PhysicsObjectSpawner;
@@ -27,6 +29,8 @@ impl PluginGroup for GamePlugins {
         group
             .add(crate::physics_events::PhysicEventsPlugin::default())
             .add(crate::assets::AssetsPlugin::default())
+            .add(crate::scoring::ScoringPlugin::default())
+            .add(crate::ui::UIPlugin::default())
             .add(crate::trap::TrapsPlugin::default())
             .add(crate::cuboids::CuboidsPlugin::default())
             .add(crate::world::WorldPlugin::default());
