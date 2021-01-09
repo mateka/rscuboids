@@ -14,7 +14,6 @@ fn traps(
 ) {
     let collider_index_to_entity = |idx: ColliderHandle| {
         let collider = &colliders[idx];
-        assert!(collider.user_data != 0);
         Entity::from_bits(collider.user_data as u64)
     };
     let mut despawn_if_trap = |trap, other| {
