@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_rapier2d::physics::EventQueue;
-pub use bevy_rapier2d::rapier::geometry::{ContactEvent, ProximityEvent};
+pub use bevy_rapier2d::rapier::geometry::{ContactEvent, Proximity, ProximityEvent};
 
 fn proximity_events_producer(
     events: Res<EventQueue>,

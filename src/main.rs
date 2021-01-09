@@ -3,13 +3,10 @@ use bevy::{
     prelude::*,
 };
 use bevy_rapier2d::physics::RapierPhysicsPlugin;
-use bevy_rapier2d::rapier::{
-    dynamics::RigidBodyBuilder,
-    geometry::{ColliderBuilder, ColliderSet},
-};
+use bevy_rapier2d::rapier::{dynamics::RigidBodyBuilder, geometry::ColliderBuilder};
 use bevy_rapier2d::render::RapierRenderPlugin;
 
-use rscuboids::{cuboids::Spawner, ContactEvent, GamePlugins};
+use rscuboids::{cuboids::Spawner, physics_layers, trap::Trap, GamePlugins, PhysicsObjectSpawner};
 
 #[bevy_main]
 fn main() {
@@ -28,59 +25,7 @@ fn main() {
         .add_startup_system(setup_world.system())
         .add_startup_system(setup_cube_spawners.system())
         .add_system(text_update_system.system())
-        .add_system(print_colision_started_events.system())
-        .add_system(print_colision_stopped_events.system())
         .run();
-}
-
-fn print_colision_started_events(
-    mut state: Local<EventReader<ContactEvent>>,
-    my_events: Res<Events<ContactEvent>>,
-    colliders: Res<ColliderSet>,
-) {
-    for contact_event in state.iter(&my_events) {
-        match contact_event {
-            ContactEvent::Started(c1, c2) => {
-                let collider_1 = &colliders[*c1];
-                let collider_2 = &colliders[*c2];
-
-                if collider_1.user_data != 0 {
-                    let eid = Entity::from_bits(collider_1.user_data as u64);
-                    println!("STARTED: C1 is a cuboid with Entity ID {:?}", eid);
-                }
-                if collider_2.user_data != 0 {
-                    let eid = Entity::from_bits(collider_2.user_data as u64);
-                    println!("STARTED: C2 is a cuboid with Entity ID {:?}", eid);
-                }
-            }
-            ContactEvent::Stopped(_, _) => {}
-        }
-    }
-}
-
-fn print_colision_stopped_events(
-    mut state: Local<EventReader<ContactEvent>>,
-    my_events: Res<Events<ContactEvent>>,
-    colliders: Res<ColliderSet>,
-) {
-    for contact_event in state.iter(&my_events) {
-        match contact_event {
-            ContactEvent::Stopped(c1, c2) => {
-                let collider_1 = &colliders[*c1];
-                let collider_2 = &colliders[*c2];
-
-                if collider_1.user_data != 0 {
-                    let eid = Entity::from_bits(collider_1.user_data as u64);
-                    println!("STOPED: C1 is a cuboid with Entity ID {:?}", eid);
-                }
-                if collider_2.user_data != 0 {
-                    let eid = Entity::from_bits(collider_2.user_data as u64);
-                    println!("STOPED: C2 is a cuboid with Entity ID {:?}", eid);
-                }
-            }
-            ContactEvent::Started(_, _) => {}
-        }
-    }
 }
 
 fn setup(commands: &mut Commands, asset_server: Res<AssetServer>) {
@@ -92,7 +37,7 @@ fn setup(commands: &mut Commands, asset_server: Res<AssetServer>) {
         })
         // camera
         .spawn(Camera3dBundle {
-            transform: Transform::from_translation(Vec3::new(0.0, -15.0, 150.0))
+            transform: Transform::from_translation(Vec3::new(0.0, 0.0, 150.0))
                 .looking_at(Vec3::default(), Vec3::unit_y()),
             ..Default::default()
         })
@@ -124,20 +69,25 @@ fn setup_world(
     physics_config.gravity = bevy_rapier2d::na::Vector2::new(0.0, 0.0);
 
     let ceiling_body = RigidBodyBuilder::new_static().translation(0.0, 65.0);
-    let ceiling_collider = ColliderBuilder::cuboid(1000.0, 1.0);
+    let ceiling_collider =
+        ColliderBuilder::cuboid(1000.0, 1.0).collision_groups(physics_layers::TRAPS);
     commands.spawn((ceiling_body, ceiling_collider));
 
     // let floor_body = RigidBodyBuilder::new_static().translation(0.0, -61.0);
     let floor_body = RigidBodyBuilder::new_static().translation(0.0, -50.0);
-    let floor_collider = ColliderBuilder::cuboid(1000.0, 1.0).sensor(true); //.user_data(data);
-    commands.spawn((floor_body, floor_collider));
+    let floor_collider = ColliderBuilder::cuboid(1000.0, 1.0)
+        .sensor(true)
+        .collision_groups(physics_layers::TRAPS);
+    commands.spawn_object((Trap,), floor_body, floor_collider);
 
     let left_body = RigidBodyBuilder::new_static().translation(-105.0, 0.0);
-    let left_collider = ColliderBuilder::cuboid(1.0, 1000.0);
+    let left_collider =
+        ColliderBuilder::cuboid(1.0, 1000.0).collision_groups(physics_layers::WALLS);
     commands.spawn((left_body, left_collider));
 
     let right_body = RigidBodyBuilder::new_static().translation(105.0, 0.0);
-    let right_collider = ColliderBuilder::cuboid(1.0, 1000.0);
+    let right_collider =
+        ColliderBuilder::cuboid(1.0, 1000.0).collision_groups(physics_layers::WALLS);
     commands.spawn((right_body, right_collider));
 }
 
