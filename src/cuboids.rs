@@ -4,6 +4,8 @@ use rand::{rngs::StdRng, Rng, SeedableRng};
 use std::ops::Range;
 
 use super::assets::{Materials, Meshes, CUBOID_MESH_SIZE};
+use super::physics_layers;
+use super::PhysicsObjectSpawner;
 
 #[derive(Debug)]
 pub struct Cuboid {
@@ -24,27 +26,25 @@ fn spawn_cuboid(
     position: Vec2,
     velocity: Vec2,
 ) {
-    let entity_id = commands
-        .spawn(PbrBundle {
-            mesh: meshes.cuboid[&size].clone(),
-            material: materials.cuboid[&size].clone(),
-            ..Default::default()
-        })
-        .with(Cuboid { size })
-        .current_entity()
-        .unwrap();
-
-    let user_data = entity_id.to_bits() as u128;
     let extent = 0.5 * CUBOID_MESH_SIZE * size as f32;
     let body = RigidBodyBuilder::new_dynamic()
         .translation(position.x, position.y)
-        .linvel(velocity.x, velocity.y)
-        .user_data(user_data);
+        .linvel(velocity.x, velocity.y);
     let collider = ColliderBuilder::cuboid(extent, extent)
         .restitution(1.5)
-        .user_data(user_data);
+        .collision_groups(physics_layers::ALL);
 
-    commands.with_bundle((body, collider));
+    commands
+        .spawn_object(
+            PbrBundle {
+                mesh: meshes.cuboid[&size].clone(),
+                material: materials.cuboid[&size].clone(),
+                ..Default::default()
+            },
+            body,
+            collider,
+        )
+        .with(Cuboid { size });
 }
 
 #[derive(Debug)]
