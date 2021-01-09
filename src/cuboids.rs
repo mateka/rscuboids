@@ -24,21 +24,27 @@ fn spawn_cuboid(
     position: Vec2,
     velocity: Vec2,
 ) {
-    let extent = 0.5 * CUBOID_MESH_SIZE * size as f32;
-    let body = RigidBodyBuilder::new_dynamic()
-        .translation(position.x, position.y)
-        .linvel(velocity.x, velocity.y);
-    let collider = ColliderBuilder::cuboid(extent, extent).restitution(1.5);
-    let cuboid = Cuboid { size };
-
-    commands
+    let entity_id = commands
         .spawn(PbrBundle {
             mesh: meshes.cuboid[&size].clone(),
             material: materials.cuboid[&size].clone(),
             ..Default::default()
         })
-        .with_bundle((body, collider))
-        .with(cuboid);
+        .with(Cuboid { size })
+        .current_entity()
+        .unwrap();
+
+    let user_data = entity_id.to_bits() as u128;
+    let extent = 0.5 * CUBOID_MESH_SIZE * size as f32;
+    let body = RigidBodyBuilder::new_dynamic()
+        .translation(position.x, position.y)
+        .linvel(velocity.x, velocity.y)
+        .user_data(user_data);
+    let collider = ColliderBuilder::cuboid(extent, extent)
+        .restitution(1.5)
+        .user_data(user_data);
+
+    commands.with_bundle((body, collider));
 }
 
 #[derive(Debug)]
