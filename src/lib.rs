@@ -15,6 +15,7 @@ pub mod cuboids;
 mod physics_events;
 mod physics_object_spawner;
 pub mod trap;
+pub mod world;
 
 pub use physics_events::{ContactEvent, Proximity, ProximityEvent};
 pub use physics_object_spawner::PhysicsObjectSpawner;
@@ -27,6 +28,7 @@ impl PluginGroup for GamePlugins {
             .add(crate::physics_events::PhysicEventsPlugin::default())
             .add(crate::assets::AssetsPlugin::default())
             .add(crate::trap::TrapsPlugin::default())
-            .add(crate::cuboids::CuboidsPlugin::default());
+            .add(crate::cuboids::CuboidsPlugin::default())
+            .add(crate::world::WorldPlugin::default());
     }
 }

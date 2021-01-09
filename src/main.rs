@@ -3,10 +3,9 @@ use bevy::{
     prelude::*,
 };
 use bevy_rapier2d::physics::RapierPhysicsPlugin;
-use bevy_rapier2d::rapier::{dynamics::RigidBodyBuilder, geometry::ColliderBuilder};
 use bevy_rapier2d::render::RapierRenderPlugin;
 
-use rscuboids::{cuboids::Spawner, physics_layers, trap::Trap, GamePlugins, PhysicsObjectSpawner};
+use rscuboids::GamePlugins;
 
 #[bevy_main]
 fn main() {
@@ -22,25 +21,12 @@ fn main() {
         .add_plugin(FrameTimeDiagnosticsPlugin::default())
         .add_plugins(GamePlugins)
         .add_startup_system(setup.system())
-        .add_startup_system(setup_world.system())
-        .add_startup_system(setup_cube_spawners.system())
         .add_system(text_update_system.system())
         .run();
 }
 
 fn setup(commands: &mut Commands, asset_server: Res<AssetServer>) {
     commands
-        // light
-        .spawn(LightBundle {
-            transform: Transform::from_translation(Vec3::new(4.0, -4.0, 5.0)),
-            ..Default::default()
-        })
-        // camera
-        .spawn(Camera3dBundle {
-            transform: Transform::from_translation(Vec3::new(0.0, 0.0, 150.0))
-                .looking_at(Vec3::default(), Vec3::unit_y()),
-            ..Default::default()
-        })
         .spawn(CameraUiBundle::default())
         // texture
         .spawn(TextBundle {
@@ -60,78 +46,6 @@ fn setup(commands: &mut Commands, asset_server: Res<AssetServer>) {
             ..Default::default()
         })
         .with(FpsText);
-}
-
-fn setup_world(
-    commands: &mut Commands,
-    mut physics_config: ResMut<bevy_rapier2d::physics::RapierConfiguration>,
-) {
-    physics_config.gravity = bevy_rapier2d::na::Vector2::new(0.0, 0.0);
-
-    let ceiling_body = RigidBodyBuilder::new_static().translation(0.0, 65.0);
-    let ceiling_collider =
-        ColliderBuilder::cuboid(1000.0, 1.0).collision_groups(physics_layers::TRAPS);
-    commands.spawn((ceiling_body, ceiling_collider));
-
-    // let floor_body = RigidBodyBuilder::new_static().translation(0.0, -61.0);
-    let floor_body = RigidBodyBuilder::new_static().translation(0.0, -50.0);
-    let floor_collider = ColliderBuilder::cuboid(1000.0, 1.0)
-        .sensor(true)
-        .collision_groups(physics_layers::TRAPS);
-    commands.spawn_object((Trap,), floor_body, floor_collider);
-
-    let left_body = RigidBodyBuilder::new_static().translation(-105.0, 0.0);
-    let left_collider =
-        ColliderBuilder::cuboid(1.0, 1000.0).collision_groups(physics_layers::WALLS);
-    commands.spawn((left_body, left_collider));
-
-    let right_body = RigidBodyBuilder::new_static().translation(105.0, 0.0);
-    let right_collider =
-        ColliderBuilder::cuboid(1.0, 1000.0).collision_groups(physics_layers::WALLS);
-    commands.spawn((right_body, right_collider));
-}
-
-fn setup_cube_spawners(
-    commands: &mut Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-) {
-    let mesh = meshes.add(Mesh::from(shape::Icosphere {
-        radius: 2.0,
-        ..Default::default()
-    }));
-    let material = materials.add(StandardMaterial {
-        albedo: Color::rgb(0.75, 0.6, 0.0),
-        ..Default::default()
-    });
-
-    commands
-        .spawn(PbrBundle {
-            mesh: mesh.clone(),
-            material: material.clone(),
-            transform: Transform::from_translation(Vec3::new(50.0, -15.0, 0.0)),
-            ..Default::default()
-        })
-        .with(Spawner::new(
-            Timer::from_seconds(1.0, true),
-            Some(180..360),
-            None,
-            None,
-        ));
-
-    commands
-        .spawn(PbrBundle {
-            mesh,
-            material,
-            transform: Transform::from_translation(Vec3::new(-50.0, 15.0, 0.0)),
-            ..Default::default()
-        })
-        .with(Spawner::new(
-            Timer::from_seconds(1.0, true),
-            Some(0..180),
-            None,
-            None,
-        ));
 }
 
 // A unit struct to help identify the FPS UI component, since there may be many Text components
