@@ -19,7 +19,7 @@ mod trap;
 mod ui;
 mod world;
 
-pub use physics_events::{ContactEvent, Proximity, ProximityEvent};
+pub use physics_events::{ContactEvent, IntersectionEvent};
 pub use physics_object_spawner::PhysicsObjectSpawner;
 
 pub struct GamePlugins;

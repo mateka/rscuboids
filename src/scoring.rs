@@ -10,6 +10,6 @@ pub struct ScoringPlugin;
 
 impl Plugin for ScoringPlugin {
     fn build(&self, app: &mut AppBuilder) {
-        app.add_resource(Score { score: 0 });
+        app.insert_resource(Score { score: 0 });
     }
 }

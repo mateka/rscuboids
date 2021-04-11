@@ -1,4 +1,6 @@
-use super::{Proximity, ProximityEvent};
+use crate::physics_events::PhysicEventsSystem;
+
+use super::IntersectionEvent;
 use bevy::prelude::*;
 use bevy_rapier2d::rapier::geometry::{ColliderHandle, ColliderSet};
 
@@ -6,9 +8,8 @@ use bevy_rapier2d::rapier::geometry::{ColliderHandle, ColliderSet};
 pub struct Trap;
 
 fn traps(
-    commands: &mut Commands,
-    mut event_reader: Local<EventReader<ProximityEvent>>,
-    proximity_events: Res<Events<ProximityEvent>>,
+    mut commands: Commands,
+    mut event_reader: EventReader<IntersectionEvent>,
     colliders: Res<ColliderSet>,
     traps: Query<&Trap>,
 ) {
@@ -18,14 +19,14 @@ fn traps(
     };
     let mut despawn_if_trap = |trap, other| {
         if traps.get(trap).is_ok() {
-            commands.despawn(other);
+            commands.entity(other).despawn();
         }
     };
 
-    for proximity_event in event_reader.iter(&proximity_events) {
-        if proximity_event.new_status == Proximity::Intersecting {
-            let entity_1 = collider_index_to_entity(proximity_event.collider1);
-            let entity_2 = collider_index_to_entity(proximity_event.collider2);
+    for event in event_reader.iter() {
+        if event.intersecting {
+            let entity_1 = collider_index_to_entity(event.collider1);
+            let entity_2 = collider_index_to_entity(event.collider2);
             despawn_if_trap(entity_1, entity_2);
             despawn_if_trap(entity_2, entity_1);
         }
@@ -37,6 +38,6 @@ pub struct TrapsPlugin;
 
 impl Plugin for TrapsPlugin {
     fn build(&self, app: &mut AppBuilder) {
-        app.add_system(traps.system());
+        app.add_system(traps.system().after(PhysicEventsSystem));
     }
 }

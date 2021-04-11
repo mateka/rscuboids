@@ -14,7 +14,7 @@ pub struct Materials {
 }
 
 fn generate_assets(
-    commands: &mut Commands,
+    mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
@@ -35,10 +35,7 @@ fn generate_assets(
             .map(|s| {
                 (
                     s,
-                    materials.add(StandardMaterial {
-                        albedo: Color::rgb(0.65, 0.6, 0.6),
-                        ..Default::default()
-                    }),
+                    materials.add(StandardMaterial::from(Color::rgb(0.65, 0.6, 0.6))),
                 )
             })
             .collect::<HashMap<_, _>>(),

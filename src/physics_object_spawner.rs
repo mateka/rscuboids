@@ -1,27 +1,31 @@
-use bevy::prelude::*;
+use bevy::{
+    ecs::{component::Component, system::EntityCommands},
+    prelude::*,
+};
 use bevy_rapier2d::rapier::{dynamics::RigidBodyBuilder, geometry::ColliderBuilder};
 
-pub trait PhysicsObjectSpawner {
+pub trait PhysicsObjectSpawner<'a> {
     fn spawn_object(
         &mut self,
-        bundle: impl Bundle + Send + Sync + 'static,
+        component: impl Component,
         body_builder: RigidBodyBuilder,
         collider_builder: ColliderBuilder,
-    ) -> &mut Self;
+    ) -> EntityCommands<'a, '_>;
 }
 
-impl PhysicsObjectSpawner for Commands {
+impl<'a> PhysicsObjectSpawner<'a> for Commands<'a> {
     fn spawn_object(
         &mut self,
-        bundle: impl Bundle + Send + Sync + 'static,
+        component: impl Component,
         body_builder: RigidBodyBuilder,
         collider_builder: ColliderBuilder,
-    ) -> &mut Self {
-        let entity_id = self.spawn(bundle).current_entity().unwrap();
-        let user_data = entity_id.to_bits() as u128;
-        self.with_bundle((
-            body_builder.user_data(user_data),
-            collider_builder.user_data(user_data),
-        ))
+    ) -> EntityCommands<'a, '_> {
+        let mut entity = self.spawn();
+        let user_data = entity.id().to_bits() as u128;
+        entity
+            .insert(component)
+            .insert(body_builder.user_data(user_data))
+            .insert(collider_builder.user_data(user_data));
+        entity
     }
 }

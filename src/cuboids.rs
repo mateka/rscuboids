@@ -35,11 +35,11 @@ fn spawn_cuboid(
         .collision_groups(physics_layers::ALL);
 
     commands
-        .spawn_object((Cuboid { size },), body, collider)
-        .with_bundle(PbrBundle {
+        .spawn_object(Cuboid { size }, body, collider)
+        .insert_bundle(PbrBundle {
             mesh: meshes.cuboid[&size].clone(),
             material: materials.cuboid[&size].clone(),
-            transform: Transform::from_translation(Vec3::new(position.x, position.y, 0.0)),
+            transform: Transform::from_xyz(position.x, position.y, 0.0),
             ..Default::default()
         });
 }
@@ -84,7 +84,7 @@ impl Default for Spawner {
 }
 
 fn spawner_system(
-    commands: &mut Commands,
+    mut commands: Commands,
     mut spawners: Query<(&Transform, &mut Spawner)>,
     time: Res<Time>,
     meshes: Res<Meshes>,
@@ -92,7 +92,7 @@ fn spawner_system(
 ) {
     for (transform, mut spawner) in spawners.iter_mut() {
         // Advance time in spawner and skip spawning, if time has not elapsed
-        if !spawner.cooldown.tick(time.delta_seconds()).just_finished() {
+        if !spawner.cooldown.tick(time.delta()).just_finished() {
             continue;
         }
 
@@ -106,7 +106,7 @@ fn spawner_system(
         let position = Vec2::new(transform.translation.x, transform.translation.y)
             + (size as f32) * movement_direction;
 
-        spawn_cuboid(commands, &meshes, &materials, size, position, velocity);
+        spawn_cuboid(&mut commands, &meshes, &materials, size, position, velocity);
     }
 }
 
