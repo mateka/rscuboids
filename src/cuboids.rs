@@ -1,13 +1,12 @@
 use bevy::prelude::*;
-use bevy_rapier2d::rapier::{dynamics::RigidBodyBuilder, geometry::ColliderBuilder};
+use bevy_rapier2d::prelude::*;
 use rand::{rngs::StdRng, Rng, SeedableRng};
 use std::ops::Range;
 
 use super::assets::{Materials, Meshes, CUBOID_MESH_SIZE};
 use super::physics_layers;
-use super::PhysicsObjectSpawner;
 
-#[derive(Debug)]
+#[derive(Debug, Component)]
 pub struct Cuboid {
     pub size: u8,
 }
@@ -27,24 +26,45 @@ fn spawn_cuboid(
     velocity: Vec2,
 ) {
     let extent = 0.5 * CUBOID_MESH_SIZE * size as f32;
-    let body = RigidBodyBuilder::new_dynamic()
-        .translation(position.x, position.y)
-        .linvel(velocity.x, velocity.y);
-    let collider = ColliderBuilder::cuboid(extent, extent)
-        .restitution(1.5)
-        .collision_groups(physics_layers::ALL);
+    let body = RigidBodyBundle {
+        position: position.into(),
+        velocity: RigidBodyVelocity {
+            linvel: velocity.into(),
+            ..Default::default()
+        }
+        .into(),
+        ..Default::default()
+    };
+    let collider = ColliderBundle {
+        shape: ColliderShape::cuboid(extent, extent).into(),
+        material: ColliderMaterial {
+            restitution: 1.5,
+            ..Default::default()
+        }
+        .into(),
+        flags: ColliderFlags {
+            collision_groups: physics_layers::ALL,
+            ..Default::default()
+        }
+        .into(),
+        ..Default::default()
+    };
 
     commands
-        .spawn_object((Cuboid { size },), body, collider)
-        .with_bundle(PbrBundle {
+        .spawn()
+        .insert(Cuboid { size })
+        .insert_bundle(body)
+        .insert_bundle(collider)
+        .insert_bundle(PbrBundle {
             mesh: meshes.cuboid[&size].clone(),
             material: materials.cuboid[&size].clone(),
-            transform: Transform::from_translation(Vec3::new(position.x, position.y, 0.0)),
+            transform: Transform::from_xyz(position.x, position.y, 0.0),
             ..Default::default()
-        });
+        })
+        .insert(RigidBodyPositionSync::Discrete);
 }
 
-#[derive(Debug)]
+#[derive(Debug, Component)]
 pub struct Spawner {
     /// Cooldown timer for this spawner to spawn cuboid.
     cooldown: Timer,
@@ -84,7 +104,7 @@ impl Default for Spawner {
 }
 
 fn spawner_system(
-    commands: &mut Commands,
+    mut commands: Commands,
     mut spawners: Query<(&Transform, &mut Spawner)>,
     time: Res<Time>,
     meshes: Res<Meshes>,
@@ -92,7 +112,7 @@ fn spawner_system(
 ) {
     for (transform, mut spawner) in spawners.iter_mut() {
         // Advance time in spawner and skip spawning, if time has not elapsed
-        if !spawner.cooldown.tick(time.delta_seconds()).just_finished() {
+        if !spawner.cooldown.tick(time.delta()).just_finished() {
             continue;
         }
 
@@ -106,7 +126,7 @@ fn spawner_system(
         let position = Vec2::new(transform.translation.x, transform.translation.y)
             + (size as f32) * movement_direction;
 
-        spawn_cuboid(commands, &meshes, &materials, size, position, velocity);
+        spawn_cuboid(&mut commands, &meshes, &materials, size, position, velocity);
     }
 }
 
@@ -114,7 +134,7 @@ fn spawner_system(
 pub struct CuboidsPlugin;
 
 impl Plugin for CuboidsPlugin {
-    fn build(&self, app: &mut AppBuilder) {
-        app.add_system(spawner_system.system());
+    fn build(&self, app: &mut App) {
+        app.add_system(spawner_system);
     }
 }
