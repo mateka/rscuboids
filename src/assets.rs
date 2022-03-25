@@ -6,11 +6,15 @@ pub const CUBOID_MESH_SIZE: f32 = 3.75;
 pub struct Meshes {
     /// Map from cuboid size to mesh
     pub cuboid: HashMap<u8, Handle<Mesh>>,
+    /// Ship mesh
+    pub ship: Handle<Mesh>,
 }
 
 pub struct Materials {
     /// Map from cuboid size to material
     pub cuboid: HashMap<u8, Handle<StandardMaterial>>,
+    /// Ship material
+    pub ship: Handle<StandardMaterial>,
 }
 
 fn generate_assets(
@@ -29,6 +33,7 @@ fn generate_assets(
                 )
             })
             .collect::<HashMap<_, _>>(),
+        ship: meshes.add(Mesh::from(shape::Cube { size: 8.0 })),
     });
     commands.insert_resource(Materials {
         cuboid: (1..10)
@@ -39,6 +44,7 @@ fn generate_assets(
                 )
             })
             .collect::<HashMap<_, _>>(),
+        ship: materials.add(StandardMaterial::from(Color::rgb(0.85, 0.85, 0.1))),
     });
 }
 
