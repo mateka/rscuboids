@@ -13,6 +13,7 @@ pub mod physics_layers {
 mod assets;
 mod cuboids;
 mod scoring;
+mod ship;
 mod trap;
 mod ui;
 mod world;
@@ -24,9 +25,10 @@ impl PluginGroup for GamePlugins {
         group
             .add(crate::assets::AssetsPlugin::default())
             .add(crate::scoring::ScoringPlugin::default())
-            .add(crate::ui::UIPlugin::default())
+            .add(crate::ui::UiPlugin::default())
             .add(crate::trap::TrapsPlugin::default())
             .add(crate::cuboids::CuboidsPlugin::default())
-            .add(crate::world::WorldPlugin::default());
+            .add(crate::world::WorldPlugin::default())
+            .add(crate::ship::ShipPlugin::default());
     }
 }

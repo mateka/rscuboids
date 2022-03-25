@@ -1,4 +1,5 @@
 use super::scoring::Score;
+use super::ship::Ship;
 use bevy::{
     diagnostic::{Diagnostics, FrameTimeDiagnosticsPlugin},
     prelude::*,
@@ -23,6 +24,16 @@ fn update_fps_text(diagnostics: Res<Diagnostics>, mut query: Query<&mut Text, Wi
                 text.sections[0].value = format!("FPS: {:.2}", average).to_string();
             }
         }
+    }
+}
+
+#[derive(Debug, Component)]
+struct LivesText;
+
+fn update_lives_text(ship_query: Query<&Ship>, mut text_query: Query<&mut Text, With<LivesText>>) {
+    let ship = ship_query.single();
+    for mut text in text_query.iter_mut() {
+        text.sections[0].value = format!("Lives: {}", ship.lives).to_string();
     }
 }
 
@@ -76,32 +87,62 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..Default::default()
         })
         .insert(PointsText);
+    commands
+        // Lives text field
+        .spawn_bundle(TextBundle {
+            style: Style {
+                position_type: PositionType::Absolute,
+                position: Rect {
+                    top: Val::Px(2.0),
+                    right: Val::Percent(5.0),
+                    ..Default::default()
+                },
+                ..Default::default()
+            },
+            text: Text::with_section(
+                "Lives: ".to_string(),
+                TextStyle {
+                    font: asset_server.load("galaxy-monkey/galax___.ttf"),
+                    font_size: 36.0,
+                    color: Color::WHITE,
+                },
+                Default::default(),
+            ),
+            ..Default::default()
+        })
+        .insert(LivesText);
 }
 
 #[derive(Debug, Hash, PartialEq, Eq, Clone, SystemLabel)]
-pub struct UISystem;
+pub struct UiSystem;
 
 #[derive(Debug, Hash, PartialEq, Eq, Clone, SystemLabel)]
-enum UISystemLabels {
-    UpdateFPS,
-    UpdateScore,
+enum UiSystemLabels {
+    Score,
+    Lives,
+    Fps,
 }
 
 #[derive(Default)]
-pub struct UIPlugin;
+pub struct UiPlugin;
 
-impl Plugin for UIPlugin {
+impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(FrameTimeDiagnosticsPlugin)
             .add_startup_system(setup_ui)
             .add_system_set(
                 SystemSet::new()
-                    .label(UISystem)
-                    .with_system(update_fps_text.label(UISystemLabels::UpdateFPS))
+                    .label(UiSystem)
+                    .with_system(update_fps_text.label(UiSystemLabels::Fps))
                     .with_system(
                         update_points_text
-                            .label(UISystemLabels::UpdateScore)
-                            .after(UISystemLabels::UpdateFPS),
+                            .label(UiSystemLabels::Score)
+                            .after(UiSystemLabels::Fps),
+                    )
+                    .with_system(
+                        update_lives_text
+                            .label(UiSystemLabels::Lives)
+                            .after(UiSystemLabels::Score),
                     ),
             );
     }

@@ -1,3 +1,4 @@
+use bevy::app::StartupStage;
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
@@ -9,7 +10,7 @@ fn setup_3d_world(
 ) {
     // camera
     let mut camera = PerspectiveCameraBundle::new_3d();
-    camera.transform = Transform::from_xyz(0.0, 1.0, 300.0).looking_at(Vec3::ZERO, Vec3::Y);
+    camera.transform = Transform::from_xyz(0.0, 1.0, 150.0).looking_at(Vec3::ZERO, Vec3::Y);
     commands.spawn_bundle(camera);
 
     // light
@@ -116,8 +117,8 @@ pub struct WorldPlugin;
 impl Plugin for WorldPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(setup_3d_world)
-            .add_startup_system(setup_walls)
-            .add_startup_system(setup_traps)
-            .add_startup_system(setup_cubes_spawners);
+            .add_startup_system_to_stage(StartupStage::PostStartup, setup_walls)
+            .add_startup_system_to_stage(StartupStage::PostStartup, setup_traps)
+            .add_startup_system_to_stage(StartupStage::PostStartup, setup_cubes_spawners);
     }
 }
